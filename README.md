@@ -230,7 +230,7 @@ ESP32 → Serial In → Function Brillo
 
 ## Imagen del flujo
 
-![Flujo de Node-RED](images/flujo-node-red.png)
+![Flujo de Node-RED](Images/flujo-node-red.png)
 
 ---
 
