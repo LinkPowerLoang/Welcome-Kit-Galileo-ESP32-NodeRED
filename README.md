@@ -155,46 +155,29 @@ Abre el Administrador de bibliotecas de Arduino IDE e instala:
 
 ## 7. Programación de la ESP32
 
-La programación de Arduino se encuentra en el archivo:
+La programación completa de Arduino se encuentra disponible en el siguiente archivo:
 
-```text
-ProgramacionWelcomeKit2026.ino
-```
+[Ver programación de la ESP32](ProgramacionWelcomeKit2026/ProgramacionWelcomeKit2026.ino)
 
-Para cargarla:
+Para cargar la programación:
 
-1. Conecta la ESP32 mediante USB.
-2. Abre el archivo `.ino`.
-3. Selecciona la placa ESP32.
-4. Selecciona el puerto COM.
-5. Presiona **Upload**.
-6. Espera a que termine la carga.
-7. Cierra el Monitor Serial.
-8. Inicia Node-RED.
+1. Conecta la ESP32 a la computadora mediante un cable USB.
+2. Descarga o abre el archivo `ProgramacionWelcomeKit2026.ino`.
+3. Abre el archivo utilizando Arduino IDE.
+4. Selecciona la placa ESP32 correspondiente.
+5. Selecciona el puerto COM de la ESP32.
+6. Presiona el botón **Upload**.
+7. Espera hasta que Arduino IDE confirme que la carga terminó.
+8. Cierra el Monitor Serial.
+9. Inicia Node-RED.
 
-> Node-RED y el Monitor Serial no pueden utilizar el mismo puerto COM simultáneamente.
-
----
-
-# Broker MQTT
-
-Para realizar las pruebas de comunicación MQTT se utiliza el cliente web de HiveMQ:
-
-[HiveMQ WebSocket Client](https://www.hivemq.com/demos/websocket-client/)
-
-Este cliente permite publicar y recibir mensajes utilizando los mismos topics configurados en Node-RED.
-
-El topic utilizado para controlar los NeoPixel es:
-
-```text
-wk/mg/1
-```
+> Node-RED y el Monitor Serial de Arduino IDE no pueden utilizar simultáneamente el mismo puerto COM.
 
 ---
 
 # Flujo de Node-RED
 
-El flujo está dividido en dos partes.
+El flujo de Node-RED está dividido en dos partes principales: envío de comandos y recepción de información.
 
 ## Envío de comandos
 
@@ -206,7 +189,7 @@ Control de brillo → Function Brillo
 Encendido/Apagado → Function Encendido/Apagado
 ```
 
-Las tres funciones se conectan al nodo MQTT Out que utiliza:
+Las tres funciones se conectan al nodo MQTT Out que utiliza el siguiente topic:
 
 ```text
 wk/mg/1
@@ -214,242 +197,25 @@ wk/mg/1
 
 ## Recepción de comandos
 
-La segunda parte recibe los mensajes MQTT y los envía a la ESP32:
+La segunda parte recibe los mensajes MQTT y los envía a la ESP32 mediante el puerto serial:
 
 ```text
 MQTT In → Serial Out → ESP32
 ```
 
-La respuesta de la ESP32 se recibe mediante Serial In:
+Las respuestas y mediciones de la ESP32 se reciben mediante el nodo Serial In:
 
 ```text
-ESP32 → Serial In → Function Brillo
-                  → Function Color
-                  → Function Datos Sensor
+ESP32 → Serial In ─┬→ Function Mensaje Brillo
+                   ├→ Function Mensaje Color
+                   └→ Function Datos Sensor
 ```
 
 ## Imagen del flujo
 
-![Flujo de Node-RED](Images/flujo-node-red.png)
+La siguiente imagen muestra el flujo completo desarrollado en Node-RED:
 
----
-
-# Funciones de Node-RED
-
-## Function – Color
-
-Esta función recibe el color hexadecimal seleccionado en el Dashboard y lo convierte a formato RGB.
-
-```javascript
-let color = String(msg.payload).replace("#", "");
-
-let rojo = parseInt(color.substring(0, 2), 16);
-let verde = parseInt(color.substring(2, 4), 16);
-let azul = parseInt(color.substring(4, 6), 16);
-
-msg.payload = "COLOR:" + rojo + "," + verde + "," + azul;
-
-return msg;
-```
-
-Ejemplo:
-
-```text
-Entrada:  #ff69b4
-Salida:   COLOR:255,105,180
-```
-
----
-
-## Function – Brillo
-
-Esta función recibe el valor del control de brillo y lo limita entre 0 y 255.
-
-```javascript
-let brillo = Number(msg.payload);
-
-brillo = Math.max(0, Math.min(255, brillo));
-
-msg.payload = "BRILLO:" + brillo;
-
-return msg;
-```
-
-Ejemplo:
-
-```text
-Entrada:  100
-Salida:   BRILLO:100
-```
-
----
-
-## Function – Encendido y apagado
-
-Esta función recibe el estado del Switch.
-
-```javascript
-let estado = Number(msg.payload);
-
-if (estado === 1) {
-    msg.payload = "1";
-    return msg;
-}
-
-if (estado === 0) {
-    msg.payload = "0";
-    return msg;
-}
-
-return null;
-```
-
-El funcionamiento es:
-
-| Estado del Switch | Mensaje |
-|:---|:---:|
-| Encendido | `1` |
-| Apagado | `0` |
-
----
-
-# Funciones para recibir mensajes
-
-## Function – Mensaje de brillo
-
-Esta función permite mostrar únicamente el valor del brillo enviado por la ESP32.
-
-```javascript
-let mensaje = String(msg.payload).trim();
-
-if (mensaje.startsWith("BRILLO:")) {
-    let valor = mensaje.substring(7);
-
-    msg.payload = Number(valor);
-
-    return msg;
-}
-
-return null;
-```
-
-Ejemplo:
-
-```text
-Entrada:  BRILLO:100
-Salida:   100
-```
-
----
-
-## Function – Mensaje de color
-
-Esta función permite mostrar únicamente el color confirmado por la ESP32.
-
-```javascript
-let mensaje = String(msg.payload).trim();
-
-if (!mensaje.startsWith("COLOR:")) {
-    return null;
-}
-
-let valores = mensaje.substring(6).split(",");
-
-if (valores.length !== 3) {
-    return null;
-}
-
-let rojo = Number(valores[0]);
-let verde = Number(valores[1]);
-let azul = Number(valores[2]);
-
-msg.payload =
-    "RGB(" +
-    rojo + "," +
-    verde + "," +
-    azul + ")";
-
-return msg;
-```
-
-Ejemplo:
-
-```text
-Entrada:  COLOR:255,105,180
-Salida:   RGB(255,105,180)
-```
-
----
-
-## Function – Datos del sensor
-
-La ESP32 envía los datos del BME680 en formato JSON.
-
-```javascript
-let texto = String(msg.payload).trim();
-
-if (!texto.startsWith("{")) {
-    return null;
-}
-
-let datos;
-
-try {
-    datos = JSON.parse(texto);
-}
-catch (error) {
-    return null;
-}
-
-msg.payload =
-    "Temperatura: " + datos.temperatura + " °C | " +
-    "Humedad: " + datos.humedad + " % | " +
-    "Gas: " + datos.gas + " kΩ";
-
-return msg;
-```
-
-Ejemplo de información mostrada:
-
-```text
-Temperatura: 25.40 °C | Humedad: 60.20 % | Gas: 48.75 kΩ
-```
-
----
-
-# Configuración serial
-
-Los nodos Serial In y Serial Out deben utilizar la misma configuración:
-
-| Configuración | Valor |
-|:---|:---:|
-| Baud Rate | 9600 |
-| Data Bits | 8 |
-| Parity | None |
-| Stop Bits | 1 |
-| Split input | `\n` |
-| Deliver | ASCII strings |
-| Add character to output | `\n` |
-
----
-
-# Comandos utilizados
-
-| Acción | Comando |
-|:---|:---|
-| Encender los NeoPixel | `1` |
-| Apagar los NeoPixel | `0` |
-| Cambiar el color | `COLOR:R,G,B` |
-| Cambiar el brillo | `BRILLO:valor` |
-
-Ejemplos:
-
-```text
-1
-0
-COLOR:255,105,180
-BRILLO:100
-```
+![Flujo completo de Node-RED](Imagenes/flujo-node-red.png)
 
 ---
 
@@ -458,25 +224,37 @@ BRILLO:100
 ```text
 Welcome-Kit-Galileo-ESP32-NodeRED/
 ├── README.md
-├── Welcome_Kit_BME680_NeoPixel.ino
-└── images/
-    └── flujo-node-red.png
+├── Images/
+│   └── flujo-node-red.png
+└── ProgramacionWelcomeKit2026/
+    └── ProgramacionWelcomeKit2026.ino
 ```
 
 | Archivo | Descripción |
 |:---|:---|
-| `README.md` | Instrucciones del proyecto |
-| `Welcome_Kit_BME680_NeoPixel.ino` | Programación de la ESP32 |
-| `images/flujo-node-red.png` | Imagen del flujo de Node-RED |
+| [`README.md`](README.md) | Documentación e instrucciones del proyecto |
+| [`ProgramacionWelcomeKit2026.ino`](ProgramacionWelcomeKit2026/ProgramacionWelcomeKit2026.ino) | Programación completa de la ESP32 |
+| [`flujo-node-red.png`](Images/flujo-node-red.png) | Imagen del flujo desarrollado en Node-RED |
 
 ---
 
 # Repositorio
+
+El proyecto completo se encuentra disponible en:
 
 [Welcome-Kit-Galileo-ESP32-NodeRED](https://github.com/LinkPowerLoang/Welcome-Kit-Galileo-ESP32-NodeRED)
 
 ---
 
 # Créditos
+
+## Autor
+
+**Mateo García**
+
+- GitHub: [LinkPowerLoang](https://github.com/LinkPowerLoang)
+- Estudiante de la carrera de Ingeniería.
+- Seleccionado nacional de Robótica en 2020 y 2021.
+- Actualmente, coach de la Selección Nacional de Robótica.
 
 Proyecto desarrollado utilizando el **Welcome Kit de Universidad Galileo**.
