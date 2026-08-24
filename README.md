@@ -158,7 +158,7 @@ Abre el Administrador de bibliotecas de Arduino IDE e instala:
 La programación de Arduino se encuentra en el archivo:
 
 ```text
-Welcome_Kit_BME680_NeoPixel.ino
+ProgramacionWelcomeKit2026.ino
 ```
 
 Para cargarla:
