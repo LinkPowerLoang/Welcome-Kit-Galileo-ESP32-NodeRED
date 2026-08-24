@@ -1,239 +1,482 @@
-# Broker MQTT y HiveMQ WebSocket Client
+# Welcome Kit Galileo: ESP32, BME680 y Node-RED
 
-Para transmitir los comandos entre las computadoras se utiliza MQTT.
+Proyecto desarrollado utilizando el **Welcome Kit de Universidad Galileo**.
 
-Como herramienta de prueba se utiliza el cliente web de HiveMQ:
+El sistema permite controlar tres NeoPixel desde un Dashboard de Node-RED. Es posible encenderlos, apagarlos, cambiar su color y controlar su brillo.
+
+También permite recibir información de un sensor BME680 para visualizar temperatura, humedad y resistencia de gases.
+
+La comunicación entre computadoras se realiza mediante MQTT, mientras que la ESP32 se comunica localmente con Node-RED por medio del puerto USB/Serial.
+
+---
+
+# Características
+
+- Control de tres NeoPixel.
+- Encendido y apagado desde Node-RED.
+- Selección visual de colores.
+- Control de brillo entre 0 y 255.
+- Lectura de temperatura.
+- Lectura de humedad.
+- Lectura de resistencia de gases.
+- Comunicación MQTT entre computadoras.
+- Comunicación serial entre Node-RED y ESP32.
+- Dashboard accesible desde una computadora o teléfono.
+
+---
+
+# Instalación
+
+## 1. Instalar Node.js
+
+Ingresa a la página oficial:
+
+[Descargar Node.js](https://nodejs.org/en/download)
+
+1. Descarga la versión **LTS** para Windows.
+2. Ejecuta el instalador.
+3. Mantén las opciones predeterminadas.
+4. Al finalizar, abre CMD.
+
+Comprueba la instalación ejecutando:
+
+```bash
+node --version
+npm --version
+```
+
+Debe aparecer un resultado similar a:
+
+```text
+v18.15.0
+9.5.0
+```
+
+Los números pueden cambiar dependiendo de la versión instalada.
+
+---
+
+## 2. Instalar Node-RED
+
+Abre CMD y ejecuta:
+
+```bash
+npm install -g node-red
+```
+
+Después de finalizar la instalación, inicia Node-RED con:
+
+```bash
+node-red
+```
+
+Abre en el navegador:
+
+```text
+http://localhost:1880
+```
+
+Para acceder al Dashboard utiliza:
+
+```text
+http://localhost:1880/ui
+```
+
+> La ventana de CMD debe permanecer abierta mientras Node-RED esté funcionando.
+
+---
+
+## 3. Instalar los nodos adicionales
+
+Dentro de Node-RED:
+
+1. Abre el menú principal.
+2. Selecciona **Manage palette**.
+3. Ingresa a la pestaña **Install**.
+4. Instala los siguientes paquetes:
+
+```text
+node-red-dashboard
+node-red-node-serialport
+```
+
+Estos paquetes permiten utilizar el Dashboard y la comunicación serial con la ESP32.
+
+---
+
+## 4. Instalar Arduino IDE
+
+Descarga Arduino IDE desde:
+
+[Descargar Arduino IDE](https://www.arduino.cc/en/software)
+
+Ejecuta el instalador y mantén las opciones recomendadas.
+
+---
+
+## 5. Instalar la tarjeta ESP32
+
+En Arduino IDE:
+
+1. Abre **File → Preferences**.
+2. Busca **Additional Boards Manager URLs**.
+3. Agrega la siguiente dirección:
+
+```text
+https://espressif.github.io/arduino-esp32/package_esp32_index.json
+```
+
+4. Presiona **OK**.
+5. Abre **Tools → Board → Boards Manager**.
+6. Busca `esp32`.
+7. Instala **esp32 by Espressif Systems**.
+
+Si el proyecto requiere la versión `2.0.17`, selecciónala antes de instalar.
+
+Después selecciona:
+
+```text
+Tools → Board → ESP32 Arduino → ESP32 Dev Module
+```
+
+---
+
+## 6. Instalar las bibliotecas
+
+Abre el Administrador de bibliotecas de Arduino IDE e instala:
+
+| Biblioteca | Función |
+|:---|:---|
+| Adafruit BME680 Library | Lectura del sensor BME680 |
+| Adafruit Unified Sensor | Dependencia para sensores Adafruit |
+| Adafruit NeoPixel | Control de los NeoPixel |
+
+---
+
+## 7. Programación de la ESP32
+
+La programación de Arduino se encuentra en el archivo:
+
+```text
+Welcome_Kit_BME680_NeoPixel.ino
+```
+
+Para cargarla:
+
+1. Conecta la ESP32 mediante USB.
+2. Abre el archivo `.ino`.
+3. Selecciona la placa ESP32.
+4. Selecciona el puerto COM.
+5. Presiona **Upload**.
+6. Espera a que termine la carga.
+7. Cierra el Monitor Serial.
+8. Inicia Node-RED.
+
+> Node-RED y el Monitor Serial no pueden utilizar el mismo puerto COM simultáneamente.
+
+---
+
+# Broker MQTT
+
+Para realizar las pruebas de comunicación MQTT se utiliza el cliente web de HiveMQ:
 
 [HiveMQ WebSocket Client](https://www.hivemq.com/demos/websocket-client/)
 
-Este cliente permite:
+Este cliente permite publicar y recibir mensajes utilizando los mismos topics configurados en Node-RED.
 
-- Conectarse a un broker MQTT desde el navegador.
-- Publicar mensajes.
-- Suscribirse a topics.
-- Comprobar si los mensajes están llegando correctamente.
-- Probar el sistema sin instalar otro programa.
-
-> HiveMQ WebSocket Client es el cliente de prueba utilizado para publicar y recibir mensajes. El broker es el servidor MQTT configurado dentro del cliente y en Node-RED.
-
----
-
-## Configuración de conexión
-
-En la sección **Connection** del cliente de HiveMQ configura:
-
-| Configuración | Valor |
-|:---|:---|
-| Host | `broker.hivemq.com` |
-| Port | `8884` |
-| Client ID | Un nombre único |
-| Username | Vacío |
-| Password | Vacío |
-| Keep Alive | `60` |
-| SSL | Activado |
-| Clean Session | Activado |
-
-Ejemplo de Client ID:
-
-```text
-WelcomeKit-Galileo-PC1
-```
-
-Cada computadora o dispositivo debe utilizar un Client ID diferente.
-
-Otros ejemplos:
-
-```text
-WelcomeKit-Galileo-PC2
-WelcomeKit-Galileo-Telefono
-WelcomeKit-Galileo-Pruebas
-```
-
-Después de completar la configuración, presiona:
-
-```text
-Connect
-```
-
-El cliente debe indicar que la conexión fue realizada correctamente.
-
----
-
-## Publicar comandos
-
-En la sección **Publish** configura:
-
-| Configuración | Valor |
-|:---|:---|
-| Topic | `wk/mg/1` |
-| QoS | `0` |
-| Retain | Desactivado |
-| Message | Comando que se desea enviar |
-
-### Encender los NeoPixel
-
-```text
-Topic: wk/mg/1
-Message: 1
-```
-
-### Apagar los NeoPixel
-
-```text
-Topic: wk/mg/1
-Message: 0
-```
-
-### Cambiar el color a rosa
-
-```text
-Topic: wk/mg/1
-Message: COLOR:255,105,180
-```
-
-### Cambiar el brillo
-
-```text
-Topic: wk/mg/1
-Message: BRILLO:100
-```
-
-Después de escribir el mensaje, presiona:
-
-```text
-Publish
-```
-
-Node-RED recibirá el comando mediante el nodo MQTT In y lo enviará a la ESP32 por el puerto serial.
-
----
-
-## Suscribirse al topic de control
-
-En la sección **Subscriptions**:
-
-1. Presiona **Add New Topic Subscription**.
-2. Coloca el topic:
+El topic utilizado para controlar los NeoPixel es:
 
 ```text
 wk/mg/1
 ```
 
-3. Selecciona QoS `0`.
-4. Presiona **Subscribe**.
-
-Después de suscribirse, el cliente mostrará todos los mensajes publicados en ese topic.
-
 ---
 
-## Suscribirse a los datos del BME680
+# Flujo de Node-RED
 
-Para recibir las mediciones del sensor se pueden agregar tres suscripciones:
+El flujo está dividido en dos partes.
 
-| Información | Topic |
-|:---|:---|
-| Temperatura | `wk/bme680/temperatura` |
-| Humedad | `wk/bme680/humedad` |
-| Resistencia de gases | `wk/bme680/gas` |
+## Envío de comandos
 
-También es posible recibir todos los datos del BME680 utilizando el comodín `#`:
+La primera parte contiene los controles del Dashboard:
 
 ```text
-wk/bme680/#
+Control de colores → Function Color
+Control de brillo → Function Brillo
+Encendido/Apagado → Function Encendido/Apagado
 ```
 
-Con esta suscripción se reciben todos los topics que comiencen con:
-
-```text
-wk/bme680/
-```
-
----
-
-## Configuración MQTT en Node-RED
-
-Dentro del nodo MQTT de Node-RED utiliza el mismo broker:
-
-| Configuración | Valor |
-|:---|:---|
-| Server | `broker.hivemq.com` |
-| Port | `1883` |
-| Protocol | MQTT |
-| Client ID | Un nombre único |
-| Username | Vacío |
-| Password | Vacío |
-| Keep Alive | `60` |
-
-Ejemplo de Client ID para Node-RED:
-
-```text
-NodeRED-WelcomeKit-PC1
-```
-
-El cliente web utiliza el puerto seguro de WebSocket, mientras que Node-RED puede utilizar el puerto MQTT TCP. Ambos pueden intercambiar información si están conectados al mismo broker y utilizan los mismos topics.
-
----
-
-## Prueba de comunicación
-
-Para comprobar la comunicación:
-
-1. Ejecuta Node-RED.
-2. Verifica que el nodo MQTT indique `connected`.
-3. Abre el [HiveMQ WebSocket Client](https://www.hivemq.com/demos/websocket-client/).
-4. Conéctate al broker.
-5. Suscríbete a:
+Las tres funciones se conectan al nodo MQTT Out que utiliza:
 
 ```text
 wk/mg/1
 ```
 
-6. Publica el mensaje:
+## Recepción de comandos
+
+La segunda parte recibe los mensajes MQTT y los envía a la ESP32:
+
+```text
+MQTT In → Serial Out → ESP32
+```
+
+La respuesta de la ESP32 se recibe mediante Serial In:
+
+```text
+ESP32 → Serial In → Function Brillo
+                  → Function Color
+                  → Function Datos Sensor
+```
+
+## Imagen del flujo
+
+![Flujo de Node-RED](images/flujo-node-red.png)
+
+---
+
+# Funciones de Node-RED
+
+## Function – Color
+
+Esta función recibe el color hexadecimal seleccionado en el Dashboard y lo convierte a formato RGB.
+
+```javascript
+let color = String(msg.payload).replace("#", "");
+
+let rojo = parseInt(color.substring(0, 2), 16);
+let verde = parseInt(color.substring(2, 4), 16);
+let azul = parseInt(color.substring(4, 6), 16);
+
+msg.payload = "COLOR:" + rojo + "," + verde + "," + azul;
+
+return msg;
+```
+
+Ejemplo:
+
+```text
+Entrada:  #ff69b4
+Salida:   COLOR:255,105,180
+```
+
+---
+
+## Function – Brillo
+
+Esta función recibe el valor del control de brillo y lo limita entre 0 y 255.
+
+```javascript
+let brillo = Number(msg.payload);
+
+brillo = Math.max(0, Math.min(255, brillo));
+
+msg.payload = "BRILLO:" + brillo;
+
+return msg;
+```
+
+Ejemplo:
+
+```text
+Entrada:  100
+Salida:   BRILLO:100
+```
+
+---
+
+## Function – Encendido y apagado
+
+Esta función recibe el estado del Switch.
+
+```javascript
+let estado = Number(msg.payload);
+
+if (estado === 1) {
+    msg.payload = "1";
+    return msg;
+}
+
+if (estado === 0) {
+    msg.payload = "0";
+    return msg;
+}
+
+return null;
+```
+
+El funcionamiento es:
+
+| Estado del Switch | Mensaje |
+|:---|:---:|
+| Encendido | `1` |
+| Apagado | `0` |
+
+---
+
+# Funciones para recibir mensajes
+
+## Function – Mensaje de brillo
+
+Esta función permite mostrar únicamente el valor del brillo enviado por la ESP32.
+
+```javascript
+let mensaje = String(msg.payload).trim();
+
+if (mensaje.startsWith("BRILLO:")) {
+    let valor = mensaje.substring(7);
+
+    msg.payload = Number(valor);
+
+    return msg;
+}
+
+return null;
+```
+
+Ejemplo:
+
+```text
+Entrada:  BRILLO:100
+Salida:   100
+```
+
+---
+
+## Function – Mensaje de color
+
+Esta función permite mostrar únicamente el color confirmado por la ESP32.
+
+```javascript
+let mensaje = String(msg.payload).trim();
+
+if (!mensaje.startsWith("COLOR:")) {
+    return null;
+}
+
+let valores = mensaje.substring(6).split(",");
+
+if (valores.length !== 3) {
+    return null;
+}
+
+let rojo = Number(valores[0]);
+let verde = Number(valores[1]);
+let azul = Number(valores[2]);
+
+msg.payload =
+    "RGB(" +
+    rojo + "," +
+    verde + "," +
+    azul + ")";
+
+return msg;
+```
+
+Ejemplo:
+
+```text
+Entrada:  COLOR:255,105,180
+Salida:   RGB(255,105,180)
+```
+
+---
+
+## Function – Datos del sensor
+
+La ESP32 envía los datos del BME680 en formato JSON.
+
+```javascript
+let texto = String(msg.payload).trim();
+
+if (!texto.startsWith("{")) {
+    return null;
+}
+
+let datos;
+
+try {
+    datos = JSON.parse(texto);
+}
+catch (error) {
+    return null;
+}
+
+msg.payload =
+    "Temperatura: " + datos.temperatura + " °C | " +
+    "Humedad: " + datos.humedad + " % | " +
+    "Gas: " + datos.gas + " kΩ";
+
+return msg;
+```
+
+Ejemplo de información mostrada:
+
+```text
+Temperatura: 25.40 °C | Humedad: 60.20 % | Gas: 48.75 kΩ
+```
+
+---
+
+# Configuración serial
+
+Los nodos Serial In y Serial Out deben utilizar la misma configuración:
+
+| Configuración | Valor |
+|:---|:---:|
+| Baud Rate | 9600 |
+| Data Bits | 8 |
+| Parity | None |
+| Stop Bits | 1 |
+| Split input | `\n` |
+| Deliver | ASCII strings |
+| Add character to output | `\n` |
+
+---
+
+# Comandos utilizados
+
+| Acción | Comando |
+|:---|:---|
+| Encender los NeoPixel | `1` |
+| Apagar los NeoPixel | `0` |
+| Cambiar el color | `COLOR:R,G,B` |
+| Cambiar el brillo | `BRILLO:valor` |
+
+Ejemplos:
 
 ```text
 1
-```
-
-7. Node-RED debe recibir el mensaje.
-8. La ESP32 debe encender los tres NeoPixel.
-9. Publica:
-
-```text
 0
+COLOR:255,105,180
+BRILLO:100
 ```
-
-10. Los tres NeoPixel deben apagarse.
 
 ---
 
-## Consideraciones de seguridad
-
-El broker público de HiveMQ debe utilizarse solamente para pruebas, prácticas educativas y demostraciones.
-
-Los mensajes enviados a topics públicos podrían ser observados por otros usuarios. Por esta razón:
-
-- No publiques contraseñas.
-- No publiques información personal.
-- No publiques tokens o credenciales.
-- Utiliza topics difíciles de repetir accidentalmente.
-- No lo utilices para sistemas críticos.
-
-En lugar de un topic demasiado general como:
+# Archivos del proyecto
 
 ```text
-wk/mg/1
+Welcome-Kit-Galileo-ESP32-NodeRED/
+├── README.md
+├── Welcome_Kit_BME680_NeoPixel.ino
+└── images/
+    └── flujo-node-red.png
 ```
 
-se recomienda utilizar uno más específico:
+| Archivo | Descripción |
+|:---|:---|
+| `README.md` | Instrucciones del proyecto |
+| `Welcome_Kit_BME680_NeoPixel.ino` | Programación de la ESP32 |
+| `images/flujo-node-red.png` | Imagen del flujo de Node-RED |
 
-```text
-galileo/welcome-kit/equipo01/control
-```
+---
 
-Los topics del sensor podrían organizarse así:
+# Repositorio
 
-```text
-galileo/welcome-kit/equipo01/temperatura
-galileo/welcome-kit/equipo01/humedad
-galileo/welcome-kit/equipo01/gas
-```
+[Welcome-Kit-Galileo-ESP32-NodeRED](https://github.com/LinkPowerLoang/Welcome-Kit-Galileo-ESP32-NodeRED)
+
+---
+
+# Créditos
+
+Proyecto desarrollado utilizando el **Welcome Kit de Universidad Galileo**.
