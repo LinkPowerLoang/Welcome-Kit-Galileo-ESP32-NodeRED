@@ -563,4 +563,12 @@ El proyecto completo se encuentra disponible en:
 - Seleccionado nacional de Robótica en 2020 y 2021.
 - Actualmente, coach de la Selección Nacional de Robótica.
 
+
+**Nesthor Guillermo**
+
+- GitHub: [THOR17GT](https://github.com/THOR17GT)
+- Estudiante de la carrera de Ingeniería.
+- Seleccionado nacional de Robótica en 2020, 2021 y capitan 2022.
+- Actualmente, coach de la Selección Nacional de Robótica.
+
 Proyecto desarrollado utilizando el **Welcome Kit de Universidad Galileo**.
